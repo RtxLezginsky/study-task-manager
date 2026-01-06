@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Manager</title>
+
+<style>
+:root {
+  --main: #4f46e5;       /* Main Theme Color */
+  --bg-overlay: rgba(15, 23, 42, 0.85); /* Dark overlay for wallpaper */
+  --card-bg: #1e293b;     /* Card background */
+  --text: #e5e7eb;        /* Main text color */
+  --text-muted: #94a3b8;  /* Secondary text color */
+  --input-bg: #0f172a;
+  --border: #334155;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #0f172a;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* Overlay to ensure text is readable on any wallpaper */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--bg-overlay);
+  z-index: -1;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* --- Header --- */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  background: var(--card-bg);
+  padding: 15px 25px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  border-bottom: 3px solid var(--main);
+}
+
+h1 { margin: 0; font-size: 1.5rem; letter-spacing: 0.5px; }
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: transform 0.3s, color 0.3s;
+}
+
+.btn-icon:hover { transform: rotate(90deg); color: var(--main); }
+
+/* --- New Category Input --- */
+.new-category-box {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  background: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  font-size: 14px;
+}
+
+input:focus { border-color: var(--main); }
+
+button.primary-btn {
+  background: var(--main);
+  color: white;
+  border: none;
+  padding: 0 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+
+button.primary-btn:hover { opacity: 0.9; }
+
+/* --- Grid System --- */
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.category-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--main);
+}
+
+.category-title { font-weight: 700; font-size: 1.1rem; }
+
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 15px 0;
+  flex-grow: 1;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.task-content {
+  flex-grow: 1;
+  cursor: pointer;
+  padding-right: 10px;
+}
+
+.task-text {
+  display: block;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* Time display style */
+.task-time {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.task-item.done .task-text {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 5px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.delete-btn:hover { opacity: 1; }
+
+/* --- Settings Modal --- */
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7);
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  backdrop-filter: blur(3px);
+}
+
+.modal {
+  background: var(--card-bg);
+  padding: 30px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  border: 1px solid var(--border);
+}
+
+.modal h2 { margin-top: 0; color: var(--main); }
+
+.setting-group { margin-bottom: 25px; }
+.setting-group label { display: block; margin-bottom: 10px; color: var(--text); font-weight: 600; font-size: 0.95rem; }
+
+.color-options { display: flex; gap: 12px; }
+.color-circle {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.2s;
+}
+.color-circle:hover { transform: scale(1.1); }
+.color-circle.active { border-color: white; transform: scale(1.15); box-shadow: 0 0 10px var(--main); }
+
+.creator-info {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.close-modal {
+  position: absolute;
+  top: 15px; right: 15px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.close-modal:hover { color: var(--text); }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>📘 My Tasks</h1>
+    <button class="btn-icon" onclick="openSettings()" title="Settings">⚙️</button>
+  </header>
+
+  <div class="new-category-box">
+    <input id="catInput" placeholder="Category Name (e.g., Work, Study, Gym)...">
+    <button class="primary-btn" onclick="addCategory()">+ Category</button>
+  </div>
+
+  <div id="grid" class="categories-grid"></div>
+</div>
+
+<div id="settingsModal" class="modal-backdrop">
+  <div class="modal">
+    <button class="close-modal" onclick="closeSettings()">×</button>
+    <h2>Settings</h2>
+
+    <div class="setting-group">
+      <label>🎨 Theme Color</label>
+      <div class="color-options">
+        <div class="color-circle" style="background:#4f46e5" onclick="setTheme('#4f46e5')"></div>
+        <div class="color-circle" style="background:#16a34a" onclick="setTheme('#16a34a')"></div>
+        <div class="color-circle" style="background:#dc2626" onclick="setTheme('#dc2626')"></div>
+        <div class="color-circle" style="background:#f59e0b" onclick="setTheme('#f59e0b')"></div>
+        <div class="color-circle" style="background:#db2777" onclick="setTheme('#db2777')"></div>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <label>🖼️ Custom Wallpaper</label>
+      <input type="file" id="bgInput" accept="image/*" onchange="uploadWallpaper(this)">
+      <br>
+      <small style="color: #64748b; display:block; margin-top:5px;">Select an image to set background. Cancel to reset.</small>
+    </div>
+
+    <div class="creator-info">
+      <p><strong>Creator:</strong> Emil Kerimov</p>
+      <p><strong>Contact:</strong> <a href="mailto:emil135kerimov@mail.ru" style="color:var(--main)">emil135kerimov@mail.ru</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- State ---
+let data = {
+  categories: [],
+  theme: '#4f46e5',
+  wallpaper: null
+};
+
+// --- Init ---
+function init() {
+  const stored = localStorage.getItem("emilTaskManager");
+  if (stored) {
+    data = JSON.parse(stored);
+  }
+  
+  applyTheme(data.theme);
+  applyWallpaper(data.wallpaper);
+  render();
+}
+
+// --- Save ---
+function save() {
+  localStorage.setItem("emilTaskManager", JSON.stringify(data));
+}
+
+// --- Render ---
+function render() {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+
+  data.categories.forEach((cat, catIndex) => {
+    // Create Card
+    const card = document.createElement("div");
+    card.className = "category-card";
+
+    // Header
+    const header = document.createElement("div");
+    header.className = "category-header";
+    header.innerHTML = `
+      <span class="category-title">${escapeHtml(cat.name)}</span>
+      <button class="delete-btn" onclick="deleteCategory(${catIndex})" title="Delete Category">🗑️</button>
+    `;
+
+    // Task List
+    const ul = document.createElement("ul");
+    ul.className = "task-list";
+    
+    cat.tasks.forEach((task, taskIndex) => {
+      const li = document.createElement("li");
+      li.className = `task-item ${task.done ? 'done' : ''}`;
+      
+      // Calculate Date
+      const dateString = task.createdAt ? formatDate(task.createdAt) : '';
+
+      li.innerHTML = `
+        <div class="task-content" onclick="toggleTask(${catIndex}, ${taskIndex})">
+          <span class="task-text">${task.done ? '✅' : '⬜'} ${escapeHtml(task.text)}</span>
+          ${dateString ? `<span class="task-time">🕒 ${dateString}</span>` : ''}
+        </div>
+        <button class="delete-btn" onclick="deleteTask(${catIndex}, ${taskIndex})">×</button>
+      `;
+      ul.appendChild(li);
+    });
+
+    // Input Group
+    const inputGroup = document.createElement("div");
+    inputGroup.style.display = "flex";
+    inputGroup.style.gap = "5px";
+    inputGroup.innerHTML = `
+      <input type="text" placeholder="Add task..." id="input-${catIndex}" onkeypress="handleEnter(event, ${catIndex})">
+      <button class="primary-btn" style="padding: 0 12px;" onclick="addTask(${catIndex})">+</button>
+    `;
+
+    card.appendChild(header);
+    card.appendChild(ul);
+    card.appendChild(inputGroup);
+    grid.appendChild(card);
+  });
+}
+
+// --- Helper: Format Date ---
+function formatDate(timestamp) {
+  const date = new Date(timestamp);
+  // Example result: "Jan 7, 10:30 PM"
+  return date.toLocaleString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+}
+
+// --- Category Logic ---
+function addCategory() {
+  const input = document.getElementById("catInput");
+  const name = input.value.trim();
+  if (!name) return;
+
+  data.categories.push({
+    name: name,
+    tasks: []
+  });
+  
+  input.value = "";
+  save();
+  render();
+}
+
+function deleteCategory(index) {
+  if(confirm("Are you sure you want to delete this category and all its tasks?")) {
+    data.categories.splice(index, 1);
+    save();
+    render();
+  }
+}
+
+// --- Task Logic ---
+function addTask(catIndex) {
+  const input = document.getElementById(`input-${catIndex}`);
+  const text = input.value.trim();
+  if (!text) return;
+
+  data.categories[catIndex].tasks.push({
+    text: text,
+    done: false,
+    createdAt: Date.now() // Saving current time
+  });
+
+  save();
+  render();
+  setTimeout(() => document.getElementById(`input-${catIndex}`).focus(), 10); 
+}
+
+function handleEnter(e, catIndex) {
+  if (e.key === "Enter") addTask(catIndex);
+}
+
+function toggleTask(catIndex, taskIndex) {
+  const task = data.categories[catIndex].tasks[taskIndex];
+  task.done = !task.done;
+  save();
+  render();
+}
+
+function deleteTask(catIndex, taskIndex) {
+  data.categories[catIndex].tasks.splice(taskIndex, 1);
+  save();
+  render();
+}
+
+// --- Settings & Theme ---
+function openSettings() {
+  document.getElementById("settingsModal").style.display = "flex";
+}
+
+function closeSettings() {
+  document.getElementById("settingsModal").style.display = "none";
+}
+
+function setTheme(color) {
+  data.theme = color;
+  applyTheme(color);
+  save();
+}
+
+function applyTheme(color) {
+  document.documentElement.style.setProperty("--main", color);
+  document.querySelectorAll(".color-circle").forEach(c => {
+    c.classList.remove("active");
+  });
+}
+
+// --- Wallpaper ---
+function uploadWallpaper(input) {
+  const file = input.files[0];
+  if (!file) {
+    data.wallpaper = null;
+    applyWallpaper(null);
+    save();
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onloadend = function() {
+    const result = reader.result;
+    if (result.length > 4000000) {
+      alert("Image is too large! Please choose a smaller image (under 4MB).");
+      return;
+    }
+    data.wallpaper = result;
+    applyWallpaper(result);
+    save();
+  }
+  reader.readAsDataURL(file);
+}
+
+function applyWallpaper(base64Str) {
+  if (base64Str) {
+    document.body.style.backgroundImage = `url('${base64Str}')`;
+  } else {
+    document.body.style.backgroundImage = 'none';
+  }
+}
+
+// --- Security ---
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Run
+init();
+
+// Close modal on outside click
+document.getElementById("settingsModal").addEventListener('click', function(e) {
+  if (e.target === this) closeSettings();
+});
+
+</script>
+
+</body>
+</html>
